@@ -1,4 +1,4 @@
-README file for Formant Editor v. 0.08
+README file for Formant Editor v0.8.0
 by Márton Sóskuthy
 
 1) INTRODUCTION
