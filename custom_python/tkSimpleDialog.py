@@ -8,7 +8,7 @@ class Dialog(Toplevel):
     def __init__(self, parent, title = None, parameters = None):
 
         Toplevel.__init__(self, parent)
-        #self.transient(parent)
+        self.transient(parent)
         
         self.parameters = parameters
         if title:
