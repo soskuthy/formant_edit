@@ -1,4 +1,4 @@
-README file for Formant Editor v. 0.08
+README file for Formant Editor v0.8.0
 by Márton Sóskuthy
 
 1) INTRODUCTION
@@ -110,11 +110,7 @@ When you import the CSV file, Formant Editor will ask you to type in the name of
 
 5) Reporting bugs
 
-This is a development version, which means that it will likely have some bugs or awkward features. If you think you've found a bug, or if you think the program is misbehaving, you should tell Márton Sóskuthy, the author of Formant Editor. Please explain what the problem is exactly, when it occurred and what OS you're using. You may also want to send me the files that you were editing.
-
-Here's my email:
-
-marton.soskuthy@york.ac.uk
+This is a development version, which means that it will likely have some bugs or awkward features. If you think you've found a bug, or if you think the program is misbehaving, you should tell Márton Sóskuthy, the author of Formant Editor. Please explain what the problem is exactly, when it occurred and what OS you're using. 
 
 I also welcome recommendations for additional features, but I can't promise 
-anything! I'm also planning to make the source code for the project available soon.
+anything!
