@@ -41,18 +41,12 @@ from math import log
 from copy import copy
 
 
-MARCI_DIR = '/users/soskuthy/documents/research/projects/york/formant/formant_extractor dev'
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-if script_dir.startswith("/var/"):
-    script_dir = MARCI_DIR
 
+from custom_python.csv_custom import readCSV, writeCSV
+from custom_python import tkSimpleDialog
+from custom_snack import tkSnack
 
-sys.path.insert(0, os.path.join(script_dir, 'python'))
-sys.path.insert(0, os.path.join(script_dir, 'snack'))
-
-from csv_custom import readCSV, writeCSV
-import tkSimpleDialog
-import tkSnack
 
 
 class formantMonitor:
