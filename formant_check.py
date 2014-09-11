@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Formant Editor, Version 0.08
+Formant Editor, Version 0.8.1
 Copyright (C) 2014, Marton Soskuthy
 
 This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-Last modified: 02/09/2014
+Last modified: 11/09/2014
 """
 from __future__ import division
 from Tkinter import *
