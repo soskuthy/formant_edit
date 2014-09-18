@@ -787,7 +787,7 @@ class formantMonitor:
 
     def open (self):
         frds = tkFileDialog.askopenfilename(title="Open single/multiple FRD file(s)...", multiple=True)
-        if self.platform == 'Windows' and self.os_release=="7":
+        if self.platform == 'Windows' and self.os_release=="7" and 'PROGRAMFILES(X86)' not in os.environ:
             if "{" in frds:
                 frds = re.findall("{(.*?)}", frds)
             else:
