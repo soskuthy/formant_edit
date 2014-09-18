@@ -1,4 +1,4 @@
-README file for Formant Editor v0.8.0
+README file for Formant Editor v0.8.1
 by Márton Sóskuthy
 
 1) INTRODUCTION
@@ -14,17 +14,19 @@ Formant Editor is written in a programming language called Python, which means t
 
 - http://www.python.org/download/
 
+Note that Formant Editor currently only supports 32 bit versions of Python under Windows 7 and 8 (but it doesn't matter whether the OS itself is 32 or 64 bit).
+
 2) INSTALLATION
 
-Formant Editor is run through Python, which means that you do not have to install it. All you need to do is copy the "formant_editor" library to your computer somewhere where you'll find it. The current version of Formant Editor has been tested on Mac OS X 10.5-10.9 and Windows 7. It is likely that you will encounter problems if you try to run it on other operating systems.
+Formant Editor is run through Python, which means that you do not have to install it. All you need to do is copy the "formant_edit" library to your computer somewhere where you'll find it. The current version of Formant Editor has been tested on Mac OS X 10.5-10.9,  Windows 7 and Windows 8. It is likely that you will encounter problems if you try to run it on other operating systems.
 
 On Mac computers, you can run Formant Editor from the Terminal by navigating to its parent folder and typing
 
-	python formant_editor.py
+	python formant_check.py
 
 This should bring up a new window with Formant Editor.
 
-On Windows computers, you're advised to open Formant Editor using IDLE, a user interface for Python (which ships with the standard Python distribution). Just open formant_editor.py with IDLE, and then press F5. The program should start up in a new window.
+On Windows computers, you're advised to open Formant Editor using IDLE, a user interface for Python (which ships with the standard Python distribution). Just open formant_check.py with IDLE, and then press F5. The program should start up in a new window.
 
 Before you can start using Formant Editor, you have to configure it. This is really simple: you need to set (i) the path to the folder containing Formant Editor (ii) the path to your temporary folder (this can be any folder) and (iii) the path to Praat. The first two parameters are configured automatically, so you likely won't have to change them. However, you'll have to set up the path to Praat manually. This will be done differently depending on your operating system:
 
