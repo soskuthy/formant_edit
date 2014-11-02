@@ -28,11 +28,10 @@ To Formant (burg)... time_step number_of_formants maximum_formant window_length 
 incr = (end - start) / (number_of_measurements - 1)
 for i from 0 to number_of_measurements - 1
 	t = start + incr * i
-	f1 = Get value at time... 1 t Hertz Linear
-	f2 = Get value at time... 2 t Hertz Linear
-	f3 = Get value at time... 3 t Hertz Linear
-	f4 = Get value at time... 4 t Hertz Linear
-	f5 = Get value at time... 5 t Hertz Linear
-	print 'f1'	'f2'	'f3'	'f4'	'f5''newline$'
+	for j from 1 to 10
+		f = Get value at time... j t Hertz Linear
+		print 'f''tab$'
+	endfor
+	print 'newline$'
 endfor
 
