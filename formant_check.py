@@ -89,6 +89,7 @@ class formantMonitor:
         self.drag_data = {"x": 0, "y": 0, "item_id": None}
         self.select_anchor_x = -1
         self.select_anchor_y = -1
+        self.shift_down = False
 
         # set up display parameters
 
@@ -1673,36 +1674,47 @@ class formantMonitor:
 
 
     def keyDown (self, event):
-        if event.keysym in map(str, range(1, self.formant_use_number + 1)) and not self.play_selection_on:
+        print event.keysym
+        if event.keysym in map(str, range(1, self.formant_use_number + 1)) + ["<Shift_L>"] and not self.play_selection_on:
 
             # in case another formant is already being redrawn...
-            
-            if self.current_redrawn_formant and self.current_redrawn_formant != int(event.keysym):
-                self.realKeyRelease(self.current_redrawn_formant)
+            if event.keysym != "<Shift_L>":
+                if self.current_redrawn_formant and self.current_redrawn_formant != int(event.keysym):
+                    self.realKeyRelease(self.current_redrawn_formant)
             if self.platform == 'Windows':
-                if not self.current_redrawn_formant:
+                if event.keysym == "<Shift_L>":
+                    self.shift_down = True
+                elif not self.current_redrawn_formant:
                     self.current_redrawn_formant = int(event.keysym)
                     self.circlesToLines(self.current_redrawn_formant)
             else:
                 if self.afterId:
                     self.master.after_cancel(self.afterId)
                     self.afterId = None
+                elif event.keysym == "<Shift_L>":
+                    self.shift_down = True
                 else:
                     self.current_redrawn_formant = int(event.keysym)
                     self.circlesToLines(self.current_redrawn_formant)
+                    
             
     def keyUp (self, event):
-        if self.current_redrawn_formant:
-            if self.platform == 'Windows':
-                self.realKeyRelease(event.keysym)
-            else:
-                self.afterId = self.master.after_idle(self.realKeyRelease, event.keysym)
+        print "mupp"
+        if event.keysym in map(str, range(1, self.formant_use_number + 1)) + ["<Shift_L>"] and not self.play_selection_on:
+            if self.current_redrawn_formant or self.shift_down:
+                if self.platform == 'Windows':
+                    self.realKeyRelease(event.keysym)
+                else:
+                    self.afterId = self.master.after_idle(self.realKeyRelease, event.keysym)
 
     def realKeyRelease (self, keysym='0'):
+        if self.shift_down and keysym=="<Shift_L>":
+            self.shift_down = False
+        elif self.current_redrawn_formant:
             self.linesToCircles(int(keysym))
             self.current_redrawn_formant = 0
             self.afterId = None
-
+            
     def circlesToLines (self, formant_no):
         self.formant_line_coordinates = []
         for point in self.trajectories_list[formant_no - 1]:
@@ -1823,25 +1835,11 @@ class formantMonitor:
         closest = self.spectrogram.find_overlapping(event.x - 3, event.y - 3, event.x + 3, event.y + 3)
         for item in list(closest):
             if item in self.boundaries:
-                if not self.current_redrawn_formant:
-                    if not self.select_now:
-                        if item not in self.selected_boundaries:
-                            self.clearSelection()
-                            self.selected_boundaries.append(item)
-                        self.drag_data["item_id"] = item
-                        self.drag_data["x"] = event.x
-                        self.drag_data["y"] = event.y
-                    elif self.select_now and not self.redraw and not self.current_redrawn_formant:
-                        if item not in self.selected_boundaries:
-                            self.selected_boundaries.append(item)
-                            self.spectrogram.itemconfig(item, fill=self.boundary_selected_colour)
-                            self.boundary_is_selected = True
-                        else:
-                            self.selected_boundaries.remove(item)
-                            self.spectrogram.itemconfig(item, fill=self.boundary_colour)
-                            if len(self.selected_boundaries) == 0:
-                                self.boundary_is_selected = False
-                        return
+                if not self.current_redrawn_formant and not self.shift_down:
+                    self.drag_data["item_id"] = item
+                    self.drag_data["x"] = event.x
+                    self.drag_data["y"] = event.y
+                    return
 
     def boundaryUp (self, event):
         self.drag_data["item_id"] = None
@@ -1852,30 +1850,22 @@ class formantMonitor:
 
     def boundaryMotion (self, event):
         delta_x = event.x - self.drag_data["x"]
-        if not self.select_now and not self.current_redrawn_formant:
+        if not self.current_redrawn_formant and self.drag_data["item_id"] and not self.shift_down:
             self.boundary_has_changed = True
-            xmin = self.spectrogram.coords(self.selected_boundaries[0])[0]
-            xmax = self.spectrogram.coords(self.selected_boundaries[0])[0]
-            for boundary_id in self.selected_boundaries:
-                ms = self.spectrogram.coords(boundary_id)[0]
-                if ms < xmin:
-                    xmin = ms
-                elif ms > xmax:
-                    xmax = ms
+            xmin = self.spectrogram.coords(self.drag_data["item_id"])[0]
+            xmax = self.spectrogram.coords(self.drag_data["item_id"])[0]
             if not (xmin + delta_x < self.boundary_width or xmax + delta_x > self.spectrogram.winfo_width() - self.boundary_width):
                 move = True
-                if len(self.selected_boundaries) < 2:
-                    old_x = self.spectrogram.coords(self.selected_boundaries[0])[0]
-                    new_x = old_x + delta_x
-                    other_x = self.spectrogram.coords(self.boundaries[self.selected_boundaries[0]].other)[0]
-                    if (old_x - other_x) / abs(old_x - other_x) != (new_x - other_x) / abs(new_x - other_x):
-                        move = False
-                for boundary_id in self.selected_boundaries:
-                    if move: 
-                        self.spectrogram.move(boundary_id, delta_x, 0)
-                        canvas_x = self.spectrogram.coords(boundary_id)[0]
-                        new_ms = self.xzoom_start + (canvas_x / self.spectrogram.winfo_width()) * (self.xzoom_end - self.xzoom_start)
-                        self.boundaries[boundary_id].ms = new_ms
+                old_x = self.spectrogram.coords(self.drag_data["item_id"])[0]
+                new_x = old_x + delta_x
+                other_x = self.spectrogram.coords(self.boundaries[self.drag_data["item_id"]].other)[0]
+                if (old_x - other_x) / abs(old_x - other_x) != (new_x - other_x) / abs(new_x - other_x):
+                    move = False
+                if move: 
+                    self.spectrogram.move(self.drag_data["item_id"], delta_x, 0)
+                    canvas_x = self.spectrogram.coords(self.drag_data["item_id"])[0]
+                    new_ms = self.xzoom_start + (canvas_x / self.spectrogram.winfo_width()) * (self.xzoom_end - self.xzoom_start)
+                    self.boundaries[self.drag_data["item_id"]].ms = new_ms
                 display_x = self.spectrogram.coords(self.drag_data["item_id"])[0]
                 display_y = event.y
                 self.displayLocationDrag(display_x, display_y)
