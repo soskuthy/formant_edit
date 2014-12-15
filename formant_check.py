@@ -354,6 +354,12 @@ class formantMonitor:
         self.spectrogram.tag_bind("formant", "<Shift-ButtonRelease-1>", self.shiftFormantUp)
         self.spectrogram.tag_bind("formant", "<B1-Motion>", self.formantMotion)
         self.spectrogram.tag_bind("formant", "<Shift-B1-Motion>", self.shiftFormantMotion)
+        self.spectrogram.tag_bind("formant_label", "<ButtonPress-1>", self.formantDown)
+        self.spectrogram.tag_bind("formant_label", "<Shift-ButtonPress-1>", self.shiftFormantDown)
+        self.spectrogram.tag_bind("formant_label", "<ButtonRelease-1>", self.formantUp)
+        self.spectrogram.tag_bind("formant_label", "<Shift-ButtonRelease-1>", self.shiftFormantUp)
+        self.spectrogram.tag_bind("formant_label", "<B1-Motion>", self.formantMotion)
+        self.spectrogram.tag_bind("formant_label", "<Shift-B1-Motion>", self.shiftFormantMotion)
         self.spectrogram.bind("<Shift-ButtonPress-1>", self.selectOn)
         self.spectrogram.bind("<Shift-B1-Motion>", self.selectMotion)
         self.spectrogram.bind("<Shift-ButtonRelease-1>", self.selectOff)
@@ -485,7 +491,11 @@ class formantMonitor:
         self.button_box_outer.place(relx=self.horizontal_main_divider * 0.71, rely=self.vertical_main_divider + 0.01, relwidth=self.horizontal_main_divider * 0.28, relheight=1-self.vertical_main_divider - 0.01)
         self.button_box = Frame(self.button_box_outer)
         self.button_box.place(anchor='c', relx=0.5, rely=0.5)
-        self.tag_button = Button(self.button_box, text="Tag/Untag (t)", command=self.tag)
+        self.tag_label = Label(self.button_box, text="Tags:")
+        self.tags_outer = Frame(self.button_box)
+        self.tag_button_1 = Button(self.tags_outer, text="1", command=lambda: self.tag(1))
+        self.tag_button_2 = Button(self.tags_outer, text="2", command=lambda: self.tag(2))
+        self.tag_button_3 = Button(self.tags_outer, text="3", command=lambda: self.tag(3))
         self.zoom_in_button = Button(self.button_box, text=u"+ (\u2191)", command=self.xZoomIn)
         self.zoom_out_button = Button(self.button_box, text=u"- (\u2193)", command=self.xZoomOut)
         self.zoom_selection_button = Button(self.button_box, text="sel (n)", command=self.xZoomToSelection)
@@ -494,7 +504,11 @@ class formantMonitor:
         self.play_whole_button = Button(self.button_box, text="all (a)", command=self.playWhole)
         self.play_view_button = Button(self.button_box, text="cur (tab)", command=self.playCursor)
         self.play_selection_button = Button(self.button_box, text="int (i)", command=self.playSelection)
-        self.tag_button.grid(row=0,column=0,columnspan=3)
+        self.tag_label.grid(row=0,column=0)
+        self.tags_outer.grid(row=0,column=1,columnspan=2)
+        self.tag_button_1.grid(row=0,column=0)
+        self.tag_button_2.grid(row=0,column=1)
+        self.tag_button_3.grid(row=0,column=2)
         self.zoom_in_button.grid(row=1,column=0,sticky=E)
         self.zoom_out_button.grid(row=1,column=1)
         self.zoom_selection_button.grid(row=1,column=2,sticky=W)
@@ -722,7 +736,7 @@ class formantMonitor:
                                 formants.append(self.db.measurements[index][1][t][m])
                             if (t,m) in self.db.measurements[index][-1]:
                                 tags_exist = True
-                                tags.append(self.db.measurements[index][-1][(t,m)][0])
+                                tags.append("".join([str(x) for x in self.db.measurements[index][-1][(t,m)]]))
                             else:
                                 tags.append("")
                         table.append(metadata + [m] + formants + tags)
@@ -1417,8 +1431,10 @@ class formantMonitor:
             self.trajectories_list.append([])
             for p in range(len(line)):
                 idd = self.spectrogram.create_oval(0,0,0,0, fill="", outline="", tags="formant", width=self.formant_outline_width)
+                idd_2 = self.spectrogram.create_text(0,0,text="",fill="red",anchor=CENTER, font="Helvetica 8", tags="formant_label")
                 self.trajectories_list[f].append(idd)
                 self.trajectories_dic[idd] = Point(line[p], idd, f)
+                self.trajectories_dic[idd].tag_id = idd_2
         for f in range(len(self.trajectories_list)):
             for p in range(len(self.trajectories_list[f])):
                 if f == 0:
@@ -1444,6 +1460,8 @@ class formantMonitor:
                 if tags:
                     if (f,p) in tags:
                         self.trajectories_dic[self.trajectories_list[f][p]].tags = tags[(f,p)]
+                        tag_text = ""
+                        self.spectrogram.itemconfig(self.trajectories_dic[self.trajectories_list[f][p]].tag_id, text=tag_text)
 
     def trajectoryToFormantList (self):
         """
@@ -1539,20 +1557,24 @@ class formantMonitor:
                 fill_colour = self.trajectory_fill_colours[t][p]
                 outline_colour = self.trajectory_outline_colours[t][p]
                 point = self.trajectories_dic[trajectory[p]]
-                self.spectrogram.itemconfig(point.id, outline=outline_colour)
-                self.spectrogram.itemconfig(point.id, fill=fill_colour)    
+                #self.spectrogram.itemconfig(point.id, outline=outline_colour)
+                self.spectrogram.itemconfig(point.id, fill=fill_colour)
+                self.spectrogram.itemconfig(self.trajectories_dic[point.id].tag_id, text=self.createTagText(point.id))    
                 x_time = self.boundaries[self.left_boundary].ms + p * ((self.boundaries[self.right_boundary].ms - self.boundaries[self.left_boundary].ms) / (len(trajectory) - 1))
                 x1 = (((x_time - self.xzoom_start) / (self.xzoom_end - self.xzoom_start)) * self.spectrogram.winfo_width()) - (self.trajectory_width / 2)
                 x2 = x1 + self.trajectory_width
                 y1 = ((1 - ((point.hz - self.yzoom_start) / (self.yzoom_end - self.yzoom_start))) * self.spectrogram.winfo_height()) - (self.trajectory_width / 2)
                 y2 = y1 + self.trajectory_width
                 self.spectrogram.coords(point.id, x1, y1, x2, y2)
+                self.spectrogram.coords(self.trajectories_dic[point.id].tag_id, (x1 + x2)/2, (y1 + y2)/2)
                 self.spectrogram.lift(point.id)
+                self.spectrogram.lift(self.trajectories_dic[point.id].tag_id)
                 if t >= self.formant_use_number:
                     self.spectrogram.itemconfig(point.id, state=HIDDEN)
+                    self.spectrogram.itemconfig(self.trajectories_dic[point.id].tag_id, state=HIDDEN)
                 else:
                     self.spectrogram.itemconfig(point.id, state=NORMAL)
-
+                    self.spectrogram.itemconfig(self.trajectories_dic[point.id].tag_id, state=NORMAL)
                     
 
     def placeBoundaryText (self):
@@ -1606,7 +1628,7 @@ class formantMonitor:
                 for item in list(closest):
                     if item in self.boundaries or item in self.trajectories_dic:
                         return
-            self.clearSelection()
+                self.clearSelection()
             if self.current_redrawn_formant and not self.hide_measurements:
                 self.redraw = self.current_redrawn_formant
                 self.drag_data["x"] = event.x
@@ -1618,19 +1640,11 @@ class formantMonitor:
                 self.play_selection_on = True
 
     def clearSelectionList (self, event=None):
-        #for item in self.selected_boundaries:
-        #    self.spectrogram.itemconfig(item, fill=self.boundary_colour)
-        #for item in self.selected_points:
-        #    self.spectrogram.itemconfig(item, fill=self.trajectory_colours[self.trajectories_dic[item].formant])
         self.selected_points = []
         
         
 
     def clearSelection (self, event=None):
-        #for item in self.selected_boundaries:
-        #    self.spectrogram.itemconfig(item, fill=self.boundary_colour)
-        #for item in self.selected_points:
-        #    self.spectrogram.itemconfig(item, fill=self.trajectory_colours[self.trajectories_dic[item].formant])
         self.clearSelectionList()
         self.drawMeasurements()
         
@@ -1723,6 +1737,7 @@ class formantMonitor:
             y = xy[1] + (self.trajectory_width / 2)
             self.formant_line_coordinates.append((x,y))
             self.spectrogram.itemconfig(point, state=HIDDEN)
+            self.spectrogram.itemconfig(self.trajectories_dic[point].tag_id, state=HIDDEN)
         self.formant_line = self.spectrogram.create_line(self.formant_line_coordinates, fill=self.formant_line_colour, width=self.formant_line_width)
 
     def linesToCircles (self, formant_no):
@@ -1732,7 +1747,9 @@ class formantMonitor:
             if formant_no:
                 for point in self.trajectories_list[formant_no - 1]:
                     self.spectrogram.itemconfig(point, state=NORMAL)
+                    self.spectrogram.itemconfig(self.trajectories_dic[point].tag_id, state=NORMAL)
                     self.spectrogram.lift(point)
+                    self.spectrogram.lift(self.trajectories_dic[point].tag_id)
 
     def updateFormantLine (self, point_no):
         xy = self.spectrogram.coords(self.trajectories_list[self.current_redrawn_formant - 1][point_no])
@@ -1793,7 +1810,9 @@ class formantMonitor:
                 return
             self.drag_data["x"] = 0
             self.drag_data["y"] = 0
-            self.redraw = 0
+            if self.redraw: 
+                self.redraw = 0
+                self.drawMeasurements()
             self.play_selection_on = False
             if self.play_selection_start_x == self.play_selection_end_x:
                 self.play_selection_start_x = -1
@@ -1804,15 +1823,21 @@ class formantMonitor:
                 self.play_cursor_x = -1
             
 
-    def tag (self, event=None):
+    def tag (self, tag_number, event=None):
         if self.selected_points:
-            untagged = [self.trajectories_dic[i].tags for i in self.selected_points].count([])
+            print sum([self.trajectories_dic[i].tags for i in self.selected_points], [])
+            tagged = sum([self.trajectories_dic[i].tags for i in self.selected_points], []).count(tag_number)
             for i in self.selected_points:
-                if untagged > 0:
-                    self.trajectories_dic[i].tags = ["tagged"]
+                if tagged < len(self.selected_points):
+                    if tag_number not in self.trajectories_dic[i].tags:
+                        self.trajectories_dic[i].tags.append(tag_number)
                 else:
-                    self.trajectories_dic[i].tags = []
+                    if tag_number in self.trajectories_dic[i].tags:
+                        self.trajectories_dic[i].tags.remove(tag_number)
             self.drawMeasurements()
+            
+    def createTagText (self, point_id):
+        return "".join([str(x) for x in sorted(self.trajectories_dic[point_id].tags)])
 
     def writeTags (self):
         output = {}
@@ -1875,6 +1900,7 @@ class formantMonitor:
 
     def formantDown (self, event):
         closest = self.spectrogram.find_overlapping(event.x - 3, event.y - 3, event.x + 3, event.y + 3)
+        print closest
         for item in list(closest):
             if item in self.trajectories_dic:
                 if not self.current_redrawn_formant:
@@ -1965,6 +1991,7 @@ class formantMonitor:
                         below = self.spectrogram.coords(below_id)[1]
                     if (current + (self.trajectory_width / 2) < below) and (current - (self.trajectory_width / 2) > above):
                         self.spectrogram.move(point_id, 0, delta_y)
+                        self.spectrogram.move(self.trajectories_dic[point_id].tag_id, 0, delta_y)
                         canvas_y = self.spectrogram.coords(point_id)[1] + (self.trajectory_width / 2)
                         new_hz = self.yzoom_start + (1 - (canvas_y / self.spectrogram.winfo_height())) * (self.yzoom_end - self.yzoom_start)
                         self.trajectories_dic[point_id].hz = new_hz
