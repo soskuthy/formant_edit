@@ -736,7 +736,7 @@ class formantMonitor:
                                 formants.append(self.db.measurements[index][1][t][m])
                             if (t,m) in self.db.measurements[index][-1]:
                                 tags_exist = True
-                                tags.append("".join([str(x) for x in self.db.measurements[index][-1][(t,m)]]))
+                                tags.append("".join(sorted([str(x) for x in self.db.measurements[index][-1][(t,m)]])))
                             else:
                                 tags.append("")
                         table.append(metadata + [m] + formants + tags)
