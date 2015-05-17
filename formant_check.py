@@ -89,7 +89,6 @@ class formantMonitor:
         self.drag_data = {"x": 0, "y": 0, "item_id": None}
         self.select_anchor_x = -1
         self.select_anchor_y = -1
-        self.shift_down = False
 
         # set up display parameters
 
@@ -342,7 +341,7 @@ class formantMonitor:
         # create bindings for drag & drop, selection, draw
         
         self.spectrogram.bind("<Key>", self.keyDown)
-        self.spectrogram.bind("<KeyRelease>", self.keyUp)
+        #self.spectrogram.bind("<KeyRelease>", self.keyUp)
         self.spectrogram.bind("<B1-Motion>", self.spectrogramButtonMotion)
         self.spectrogram.bind("<ButtonRelease-1>", self.spectrogramButtonUp)
         self.spectrogram.tag_bind("boundary", "<ButtonPress-1>", self.boundaryDown)
@@ -809,7 +808,7 @@ class formantMonitor:
                 self.refreshMeasurements()
             else:
                 self.displaySpectrogram()
-            self.realKeyRelease()
+            self.exitDrawMode()
             self.image_frame.bind('<Configure>', self.resizeImages)
             self.displayMetadata()
             self.updateStatusFading("Opened " + self.current_wav + " with a sampling rate of " + str(self.current_sample_rate) + ".")
@@ -910,7 +909,7 @@ class formantMonitor:
         self.waveform.delete(ALL)
         self.file_list.delete(0, END)
         self.emptyMetadataViewer()
-        self.realKeyRelease()
+        self.exitDrawMode()
         self.file_list_progress_label["text"] = ""
         self.populateFileList()
         for i in self.filemenu_only_when_loaded:
@@ -1544,6 +1543,8 @@ class formantMonitor:
     ##################
 
     def drawMeasurements (self):
+    	if self.current_redrawn_formant:
+        	self.exitDrawMode()
         for b in self.boundaries:
             boundary = self.boundaries[b]
             x1 = ((boundary.ms - self.xzoom_start) / (self.xzoom_end - self.xzoom_start)) * self.spectrogram.winfo_width()
@@ -1692,44 +1693,54 @@ class formantMonitor:
 
     def keyDown (self, event):
         print event.keysym
-        if event.keysym in map(str, range(1, self.formant_use_number + 1)) + ["<Shift_L>"] and not self.play_selection_on:
-
+        if event.keysym in map(str, range(1, self.formant_use_number + 1)) and not self.play_selection_on:
             # in case another formant is already being redrawn...
-            if event.keysym != "<Shift_L>":
-                if self.current_redrawn_formant and self.current_redrawn_formant != int(event.keysym):
-                    self.realKeyRelease(self.current_redrawn_formant)
-            if self.platform == 'Windows':
-                if event.keysym == "<Shift_L>":
-                    self.shift_down = True
-                elif not self.current_redrawn_formant:
-                    self.current_redrawn_formant = int(event.keysym)
-                    self.circlesToLines(self.current_redrawn_formant)
+            if self.current_redrawn_formant:
+            	if self.current_redrawn_formant != int(event.keysym):
+            		self.exitDrawMode()
+            		self.drawMeasurements()
+            		self.current_redrawn_formant = int(event.keysym)
+            		self.circlesToLines(self.current_redrawn_formant)
+            	else:
+            		self.exitDrawMode()
+            		self.drawMeasurements()
             else:
-                if self.afterId:
-                    self.master.after_cancel(self.afterId)
-                    self.afterId = None
-                elif event.keysym == "<Shift_L>":
-                    self.shift_down = True
-                else:
-                    self.current_redrawn_formant = int(event.keysym)
-                    self.circlesToLines(self.current_redrawn_formant)
-                    
-            
-    def keyUp (self, event):
-        if event.keysym in map(str, range(1, self.formant_use_number + 1)) + ["<Shift_L>"] and not self.play_selection_on:
-            if self.current_redrawn_formant or self.shift_down:
-                if self.platform == 'Windows':
-                    self.realKeyRelease(event.keysym)
-                else:
-                    self.afterId = self.master.after_idle(self.realKeyRelease, event.keysym)
+            	self.clearSelection()
+            	self.current_redrawn_formant = int(event.keysym)
+            	self.circlesToLines(self.current_redrawn_formant)
+        else:
+        	self.exitDrawMode()
+        	self.drawMeasurements()
+    # old code using key hold instead of key press
 
-    def realKeyRelease (self, keysym='0'):
-        if self.shift_down and keysym=="<Shift_L>":
-            self.shift_down = False
-        elif self.current_redrawn_formant:
-            self.linesToCircles(int(keysym))
+            #if self.platform == 'Windows':
+            #    if not self.current_redrawn_formant:
+            #		self.current_redrawn_formant = int(event.keysym)
+            #		self.circlesToLines(self.current_redrawn_formant)
+            #else:
+            #    if self.afterId:
+            #        self.master.after_cancel(self.afterId)
+            #        self.afterId = None
+            #    else:
+            #        self.current_redrawn_formant = int(event.keysym)
+            #        self.circlesToLines(self.current_redrawn_formant)
+                    
+    #def keyUp (self, event):
+    #    if event.keysym in map(str, range(1, self.formant_use_number + 1)) and not self.play_selection_on:
+            #if self.current_redrawn_formant:
+            #    if self.platform == 'Windows':
+            #        self.exitDrawMode(event.keysym)
+            #    else:
+            #        self.afterId = self.master.after(300, self.exitDrawMode, event.keysym)
+
+    def exitDrawMode (self):
+        if self.current_redrawn_formant:
+            self.deleteFormantLine()        	
+            self.redraw = 0
             self.current_redrawn_formant = 0
-            self.afterId = None
+			#self.afterId = None
+			
+            
             
     def circlesToLines (self, formant_no):
         self.formant_line_coordinates = []
@@ -1742,16 +1753,15 @@ class formantMonitor:
             self.spectrogram.itemconfig(self.trajectories_dic[point].tag_id, state=HIDDEN)
         self.formant_line = self.spectrogram.create_line(self.formant_line_coordinates, fill=self.formant_line_colour, width=self.formant_line_width)
 
-    def linesToCircles (self, formant_no):
-        if self.current_redrawn_formant:
-            self.spectrogram.delete(self.formant_line)
-            self.formant_line_coordinates = []
-            if formant_no:
-                for point in self.trajectories_list[formant_no - 1]:
-                    self.spectrogram.itemconfig(point, state=NORMAL)
-                    self.spectrogram.itemconfig(self.trajectories_dic[point].tag_id, state=NORMAL)
-                    self.spectrogram.lift(point)
-                    self.spectrogram.lift(self.trajectories_dic[point].tag_id)
+    def deleteFormantLine (self):
+        self.spectrogram.delete(self.formant_line)
+        self.formant_line_coordinates = []
+        #for point in self.trajectories_list[self.current_redrawn_formant - 1]:
+        #    self.spectrogram.itemconfig(point, state=NORMAL)
+        #    self.spectrogram.itemconfig(self.trajectories_dic[point].tag_id, state=NORMAL)
+        #    self.spectrogram.lift(point)
+        #    self.spectrogram.lift(self.trajectories_dic[point].tag_id)
+        
 
     def updateFormantLine (self, point_no):
         xy = self.spectrogram.coords(self.trajectories_list[self.current_redrawn_formant - 1][point_no])
@@ -1812,9 +1822,9 @@ class formantMonitor:
                 return
             self.drag_data["x"] = 0
             self.drag_data["y"] = 0
-            if self.redraw: 
-                self.redraw = 0
-                self.drawMeasurements()
+            #if self.redraw: 
+            #    self.redraw = 0
+            #    self.drawMeasurements()
             self.play_selection_on = False
             if self.play_selection_start_x == self.play_selection_end_x:
                 self.play_selection_start_x = -1
@@ -1862,7 +1872,7 @@ class formantMonitor:
         closest = self.spectrogram.find_overlapping(event.x - 3, event.y - 3, event.x + 3, event.y + 3)
         for item in list(closest):
             if item in self.boundaries:
-                if not self.current_redrawn_formant and not self.shift_down:
+                if not self.current_redrawn_formant:
                     self.drag_data["item_id"] = item
                     self.drag_data["x"] = event.x
                     self.drag_data["y"] = event.y
@@ -1877,7 +1887,7 @@ class formantMonitor:
 
     def boundaryMotion (self, event):
         delta_x = event.x - self.drag_data["x"]
-        if not self.current_redrawn_formant and self.drag_data["item_id"] and not self.shift_down:
+        if not self.current_redrawn_formant and self.drag_data["item_id"]:
             self.boundary_has_changed = True
             xmin = self.spectrogram.coords(self.drag_data["item_id"])[0]
             xmax = self.spectrogram.coords(self.drag_data["item_id"])[0]
