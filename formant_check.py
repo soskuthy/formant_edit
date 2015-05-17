@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Formant Editor, Version 0.8.1
+Formant Editor, Version 0.8.2d
 Copyright (C) 2014, Marton Soskuthy
 
 This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-Last modified: 11/09/2014
+Last modified: 17/05/2015
 """
 from __future__ import division
 from Tkinter import *
@@ -348,18 +348,21 @@ class formantMonitor:
         self.spectrogram.tag_bind("boundary", "<ButtonPress-1>", self.boundaryDown)
         self.spectrogram.tag_bind("boundary", "<ButtonRelease-1>", self.boundaryUp)
         self.spectrogram.tag_bind("boundary", "<B1-Motion>", self.boundaryMotion)
+        self.spectrogram.tag_bind("boundary", "<Shift-ButtonPress-1>", self.Pass)
+        self.spectrogram.tag_bind("boundary", "<Shift-ButtonRelease-1>", self.Pass)
+        self.spectrogram.tag_bind("boundary", "<Shift-B1-Motion>", self.Pass)
         self.spectrogram.tag_bind("formant", "<ButtonPress-1>", self.formantDown)
         self.spectrogram.tag_bind("formant", "<Shift-ButtonPress-1>", self.shiftFormantDown)
         self.spectrogram.tag_bind("formant", "<ButtonRelease-1>", self.formantUp)
         self.spectrogram.tag_bind("formant", "<Shift-ButtonRelease-1>", self.shiftFormantUp)
         self.spectrogram.tag_bind("formant", "<B1-Motion>", self.formantMotion)
-        self.spectrogram.tag_bind("formant", "<Shift-B1-Motion>", self.shiftFormantMotion)
+        self.spectrogram.tag_bind("formant", "<Shift-B1-Motion>", self.Pass)
         self.spectrogram.tag_bind("formant_label", "<ButtonPress-1>", self.formantDown)
         self.spectrogram.tag_bind("formant_label", "<Shift-ButtonPress-1>", self.shiftFormantDown)
         self.spectrogram.tag_bind("formant_label", "<ButtonRelease-1>", self.formantUp)
         self.spectrogram.tag_bind("formant_label", "<Shift-ButtonRelease-1>", self.shiftFormantUp)
         self.spectrogram.tag_bind("formant_label", "<B1-Motion>", self.formantMotion)
-        self.spectrogram.tag_bind("formant_label", "<Shift-B1-Motion>", self.shiftFormantMotion)
+        self.spectrogram.tag_bind("formant_label", "<Shift-B1-Motion>", self.Pass)
         self.spectrogram.bind("<Shift-ButtonPress-1>", self.selectOn)
         self.spectrogram.bind("<Shift-B1-Motion>", self.selectMotion)
         self.spectrogram.bind("<Shift-ButtonRelease-1>", self.selectOff)
@@ -1713,7 +1716,6 @@ class formantMonitor:
                     
             
     def keyUp (self, event):
-        print "mupp"
         if event.keysym in map(str, range(1, self.formant_use_number + 1)) + ["<Shift_L>"] and not self.play_selection_on:
             if self.current_redrawn_formant or self.shift_down:
                 if self.platform == 'Windows':
@@ -2001,8 +2003,8 @@ class formantMonitor:
         self.drag_data["x"] = event.x
         self.drag_data["y"] = event.y
     
-    def shiftFormantMotion (self, event):
-        pass
+    def Pass (self, event):
+    	pass
 
     ##################
     #                #
