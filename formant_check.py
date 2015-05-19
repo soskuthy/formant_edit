@@ -690,19 +690,19 @@ class formantMonitor:
 
     def importCSV (self):
         if self.importCSVDialogues():
-            try:
+            #try:
                 self.frd = ""
-                csv = readCSV(self.current_csv)
+                csv = readCSV(self.current_csv, delimiter=self.delimiter)
                 settings_header, settings = self.createSettings()
                 settings_table = [list(settings) for x in range(len(csv[1]))]
                 self.db = Database(self.current_wav_column, self.current_master_folder, csv, (settings_header, settings_table), self.current_files)
                 self.db.measurements = self.createMeasurements()
                 self.onNewCurrent()
                 self.updateStatusFading(os.path.split(self.current_csv)[1] + " successfully imported.")
-            except:
-                self.frd = ""
-                self.db = None
-                self.updateStatusFading("Import CSV failed.")
+            #except:
+            #    self.frd = ""
+            #    self.db = None
+            #    self.updateStatusFading("Import CSV failed.")
 
     def exportCSV (self):
         self.chooseFile()
@@ -759,7 +759,7 @@ class formantMonitor:
         self.current_csv = tkFileDialog.askopenfilename(title="Import CSV file...")
         if not self.current_csv:
             return False
-        self.current_wav_column, self.formant_number_of_measurements = selectColumn(self.master, "Import settings").output
+        self.current_wav_column, self.delimiter, self.formant_number_of_measurements  = selectColumn(self.master, "Import settings").output
         if not self.current_wav_column:
             return False
         self.current_master_folder = os.path.dirname(self.current_csv)
@@ -1543,8 +1543,8 @@ class formantMonitor:
     ##################
 
     def drawMeasurements (self):
-    	if self.current_redrawn_formant:
-        	self.exitDrawMode()
+        if self.current_redrawn_formant:
+            self.exitDrawMode()
         for b in self.boundaries:
             boundary = self.boundaries[b]
             x1 = ((boundary.ms - self.xzoom_start) / (self.xzoom_end - self.xzoom_start)) * self.spectrogram.winfo_width()
@@ -1696,27 +1696,27 @@ class formantMonitor:
         if event.keysym in map(str, range(1, self.formant_use_number + 1)) and not self.play_selection_on:
             # in case another formant is already being redrawn...
             if self.current_redrawn_formant:
-            	if self.current_redrawn_formant != int(event.keysym):
-            		self.exitDrawMode()
-            		self.drawMeasurements()
-            		self.current_redrawn_formant = int(event.keysym)
-            		self.circlesToLines(self.current_redrawn_formant)
-            	else:
-            		self.exitDrawMode()
-            		self.drawMeasurements()
+                if self.current_redrawn_formant != int(event.keysym):
+                    self.exitDrawMode()
+                    self.drawMeasurements()
+                    self.current_redrawn_formant = int(event.keysym)
+                    self.circlesToLines(self.current_redrawn_formant)
+                else:
+                    self.exitDrawMode()
+                    self.drawMeasurements()
             else:
-            	self.clearSelection()
-            	self.current_redrawn_formant = int(event.keysym)
-            	self.circlesToLines(self.current_redrawn_formant)
+                self.clearSelection()
+                self.current_redrawn_formant = int(event.keysym)
+                self.circlesToLines(self.current_redrawn_formant)
         else:
-        	self.exitDrawMode()
-        	self.drawMeasurements()
+            self.exitDrawMode()
+            self.drawMeasurements()
     # old code using key hold instead of key press
 
             #if self.platform == 'Windows':
             #    if not self.current_redrawn_formant:
-            #		self.current_redrawn_formant = int(event.keysym)
-            #		self.circlesToLines(self.current_redrawn_formant)
+            #       self.current_redrawn_formant = int(event.keysym)
+            #       self.circlesToLines(self.current_redrawn_formant)
             #else:
             #    if self.afterId:
             #        self.master.after_cancel(self.afterId)
@@ -1735,11 +1735,11 @@ class formantMonitor:
 
     def exitDrawMode (self):
         if self.current_redrawn_formant:
-            self.deleteFormantLine()        	
+            self.deleteFormantLine()            
             self.redraw = 0
             self.current_redrawn_formant = 0
-			#self.afterId = None
-			
+            #self.afterId = None
+            
             
             
     def circlesToLines (self, formant_no):
@@ -2014,7 +2014,7 @@ class formantMonitor:
         self.drag_data["y"] = event.y
     
     def Pass (self, event):
-    	pass
+        pass
 
     ##################
     #                #
@@ -2241,20 +2241,24 @@ class selectColumn (tkSimpleDialog.Dialog):
     def body(self, master):
 
         Label(master, text="Name of WAV column:").grid(row=0)
-        Label(master, text="Number of measurement points:").grid(row=1)
+        Label(master, text="Delimiter:").grid(row=1)
+        Label(master, text="Number of measurement points:").grid(row=2)
         
-        self.output = ("", 11)
+        self.output = ("", "\\t", 11)
         self.e1 = Entry(master)
         self.e1.insert(0, self.output[0])
         self.e2 = Entry(master)
-        self.e2.insert(0, str(self.output[1]))
+        self.e2.insert(0, self.output[1])
+        self.e3 = Entry(master)
+        self.e3.insert(0, str(self.output[2]))
 
         self.e1.grid(row=0, column=1)
         self.e2.grid(row=1, column=1)
+        self.e3.grid(row=2, column=1)
         return self.e1 # initial focus
 
     def apply(self):
-        self.output = (self.e1.get(), int(self.e2.get()))
+        self.output = (self.e1.get(), self.e2.get().decode('string_escape'), int(self.e3.get()))
 
 class selectFormantNo (tkSimpleDialog.Dialog):
 

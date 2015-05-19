@@ -1,36 +1,37 @@
-import codecs
+import codecs, csv
 
-def readCSV (fname):
-        f = codecs.open(fname, 'r')
-        lines = f.readlines()
-        f.close()
+def readCSV (fname, delimiter="\t"):
+        #f = codecs.open(fname, 'r')
+        #lines = f.readlines()
+        #f.close()
         header = {}
         table = []
-        for l in range(len(lines)):
-            fields = lines[l].strip().split("\t")
-            if l == 0:
-                for c in range(len(fields)):
-                    header[fields[c]] = c
-            else:
-                output_row = []
-                for field in fields:
-                    if field.startswith('"') and field.endswith('"'):
-                        output_row.append(field.replace('"', ''))
-                    else:
+        with codecs.open(fname, 'r') as csvfile:
+            lines = csv.reader(csvfile, delimiter=delimiter, quotechar='"')
+            l = 0
+            for fields in lines:
+                if l == 0:
+                    for c in range(len(fields)):
+                        header[fields[c]] = c
+                else:
+                    output_row = []
+                    for field in fields:
+                        # for future: figure out how to detect presence of quotes in orig file 
                         if '.' in field:
                             try:
                                 output_row.append(float(field))
                             except:
-                                output_row.append(None)
+                                output_row.append(field)
                         else:
                             try:
                                 output_row.append(int(field))
                             except:
-                                output_row.append(None)
-                table.append(output_row)
+                                output_row.append(field)
+                    table.append(output_row)
+                l += 1
         return header, table
 
-def writeCSV (fname, header, table):
+def writeCSV (fname, header, table, delimiter="\t"):
         text = ["\t".join(header) + "\n"]
         for row in table:
             output_row = ""
