@@ -104,6 +104,10 @@ Exporting your measurements is really easy. Just go to the file menu and click o
 
 Each measurement point is stored as a separate observation in the CSV file. So if you have 11 measurements for each vowel (i.e. one at 0%, 10%, 20%, etc.), the CSV file will contain 11 rows for each vowel, each row containing the formant values at a specific point in time. The rows include the duration of the entire vowel as well.
 
+g) Adding a tag to specific formant measurements
+
+You can tag specific formant measurements using the buttons labelled 1/2/3 in the "Tag" area on the screen. First, you'll need to select the measurements you want to tag. You can select multiple measurements either by holding the shift key and adding the measurement points one by one, or by using the selection rectangle (shift + click on the spectrogram somewhere that's not a measurement point). You can remove the tags by clicking the relevant tag button again. The tags will show up in the output csv file in separate columns.
+
 4) Creating your own data set
 
 You can create a new project by importing a CSV file, which contains metadata for each sound file. Minimally, this CSV file will contain a single column with a header and a list of all the wav files. This column is obligatory, but you can have other columns as well (as many as you wish). However, you have to make sure that your file is correctly formatted: the rows should be separated by newline characters, and the columns by tab characters; cells containing text should have their contents surrounded by "s (including the column with the names of the wav files). You also need to have a header -- but the names in the header should not be surrounded by "s. The "examples" folder has a representative example named "carl_uw.csv".
